@@ -1,5 +1,5 @@
-// AB Test Generator Panel - Version Améliorée
-// Club Med Edition
+// AB Test Generator Panel - Version HYBRIDE
+// Combine inspection + génération naturelle + CSS global
 (function() {
   'use strict';
 
@@ -9,14 +9,14 @@
     return;
   }
 
-  // Injecter les styles CSS
+  // Injecter les styles CSS du panel
   const style = document.createElement('style');
   style.textContent = `
     #ab-test-bookmarklet-panel {
       position: fixed;
       top: 0;
       right: 0;
-      width: 450px;
+      width: 500px;
       height: 100vh;
       background: #fff;
       box-shadow: -5px 0 30px rgba(0,0,0,0.2);
@@ -61,6 +61,7 @@
       cursor: pointer;
       margin: 0.5rem 0;
       transition: all 0.2s;
+      font-size: 0.95rem;
     }
     .ab-btn:hover {
       transform: translateY(-1px);
@@ -70,8 +71,13 @@
       background: #2563eb;
       color: #fff;
     }
-    .ab-btn-primary:hover {
-      background: #1d4ed8;
+    .ab-btn-success {
+      background: #10b981;
+      color: #fff;
+    }
+    .ab-btn-warning {
+      background: #f59e0b;
+      color: #fff;
     }
     .ab-input {
       width: 100%;
@@ -81,6 +87,10 @@
       font-family: inherit;
       margin: 0.5rem 0;
       font-size: 0.95rem;
+    }
+    .ab-input-code {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9rem;
     }
     .ab-input:focus {
       outline: none;
@@ -132,6 +142,10 @@
       background: #2563eb;
       color: #fff;
     }
+    .ab-message-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
     .ab-message-error {
       background: #fee2e2;
       color: #991b1b;
@@ -140,6 +154,35 @@
       outline: 3px solid #2563eb !important;
       outline-offset: 2px;
       cursor: crosshair !important;
+    }
+    .ab-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .ab-tab {
+      padding: 0.75rem 1rem;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-weight: 600;
+      color: #64748b;
+      transition: all 0.2s;
+    }
+    .ab-tab:hover {
+      color: #2563eb;
+    }
+    .ab-tab.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+    .ab-tab-content {
+      display: none;
+    }
+    .ab-tab-content.active {
+      display: block;
     }
   `;
   document.head.appendChild(style);
@@ -150,33 +193,58 @@
   panel.innerHTML = `
     <div id='ab-panel-header'>
       <div>
-        <h2 style='margin:0;font-size:1.3rem'>🧪 AB Test Generator</h2>
-        <p style='margin:0;opacity:0.9;font-size:0.9rem'>Version Améliorée</p>
+        <h2 style='margin:0;font-size:1.3rem'>🎨 AB Test - Version Complète</h2>
+        <p style='margin:0;opacity:0.9;font-size:0.9rem'>Inspection + Génération + CSS</p>
       </div>
       <button id='ab-close-btn'>✕</button>
     </div>
     <div id='ab-panel-content'>
+
       <div class='ab-section'>
         <h3>📍 Page actuelle</h3>
         <p style='font-size:0.85rem;color:#64748b;word-break:break-all'>${window.location.href}</p>
       </div>
-      <div class='ab-section'>
-        <h3>💬 Génération de variante</h3>
-        <textarea id='ab-variant-input' class='ab-input' placeholder='Ex: Change la couleur du bouton en bleu' rows='3'></textarea>
-        <button id='ab-generate-btn' class='ab-btn ab-btn-primary'>Générer le code</button>
-        <div id='ab-messages'></div>
-      </div>
+
       <div class='ab-section'>
         <h3>🎯 Mode inspection</h3>
-        <button id='ab-inspect-btn' class='ab-btn'>🔍 Activer l'inspection</button>
+        <button id='ab-inspect-btn' class='ab-btn ab-btn-primary'>🔍 Activer l'inspection</button>
         <p id='ab-selected' style='margin:0.5rem 0;font-size:0.85rem;color:#64748b'>Aucun élément sélectionné</p>
       </div>
-      <div class='ab-section' id='ab-code-section' style='display:none'>
-        <h3>📝 Code généré</h3>
-        <div id='ab-code-output'></div>
-        <button id='ab-copy-btn' class='ab-btn'>📋 Copier le code</button>
-        <button id='ab-preview-btn' class='ab-btn'>👁️ Preview sur la page</button>
+
+      <div class='ab-section'>
+        <div class='ab-tabs'>
+          <button class='ab-tab active' data-tab='natural'>💬 Langage naturel</button>
+          <button class='ab-tab' data-tab='css'>🎨 CSS direct</button>
+        </div>
+
+        <div class='ab-tab-content active' id='tab-natural'>
+          <h3>💬 Génération intelligente</h3>
+          <p style='font-size:0.85rem;color:#64748b;margin-bottom:0.5rem'>
+            Décrivez votre modification en français
+          </p>
+          <textarea id='ab-variant-input' class='ab-input' placeholder='Ex: Change la couleur du bouton en rouge\nMasque cet élément\nAugmente la taille à 24px' rows='3'></textarea>
+          <button id='ab-generate-btn' class='ab-btn ab-btn-primary'>⚡ Générer le code CSS</button>
+        </div>
+
+        <div class='ab-tab-content' id='tab-css'>
+          <h3>🎨 Éditeur CSS</h3>
+          <p style='font-size:0.85rem;color:#64748b;margin-bottom:0.5rem'>
+            Écrivez directement du CSS
+          </p>
+          <textarea id='ab-css-input' class='ab-input ab-input-code' placeholder='Exemple:\nbutton {\n  background: orange !important;\n}' rows='6'></textarea>
+        </div>
+
+        <button id='ab-apply-btn' class='ab-btn ab-btn-success'>✨ Appliquer sur la page</button>
+        <button id='ab-clear-btn' class='ab-btn ab-btn-warning'>🗑️ Effacer les modifications</button>
+        <div id='ab-messages'></div>
       </div>
+
+      <div class='ab-section' id='ab-code-section' style='display:none'>
+        <h3>📝 Code CSS généré</h3>
+        <div id='ab-code-output'></div>
+        <button id='ab-copy-btn' class='ab-btn'>📋 Copier pour AB Tasty</button>
+      </div>
+
     </div>
   `;
   document.body.appendChild(panel);
@@ -185,6 +253,8 @@
   let inspectMode = false;
   let selectedEl = null;
   let hoverEl = null;
+  let appliedCSS = null;
+  let currentTab = 'natural';
 
   // Fonction pour ajouter des messages
   const addMsg = (txt, type = 'system') => {
@@ -194,13 +264,97 @@
     const msgContainer = document.getElementById('ab-messages');
     msgContainer.appendChild(msg);
     msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    if (type === 'system') {
+      setTimeout(() => msg.remove(), 5000);
+    }
   };
 
-  // Analyse de la description et génération du code
+  // Gestion des onglets
+  document.querySelectorAll('.ab-tab').forEach(tab => {
+    tab.onclick = () => {
+      const tabName = tab.dataset.tab;
+
+      // Activer l'onglet
+      document.querySelectorAll('.ab-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      // Afficher le contenu
+      document.querySelectorAll('.ab-tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+
+      currentTab = tabName;
+    };
+  });
+
+  // Fermer le panel
+  document.getElementById('ab-close-btn').onclick = () => {
+    panel.classList.toggle('closed');
+  };
+
+  // Mode inspection
+  document.getElementById('ab-inspect-btn').onclick = () => {
+    inspectMode = !inspectMode;
+    document.getElementById('ab-inspect-btn').textContent = inspectMode
+      ? '✓ Inspection active'
+      : '🔍 Activer l\'inspection';
+    document.body.style.cursor = inspectMode ? 'crosshair' : '';
+
+    if (!inspectMode && hoverEl) {
+      hoverEl.classList.remove('ab-inspect-hover');
+    }
+  };
+
+  const handleHover = (e) => {
+    if (!inspectMode || e.target.closest('#ab-test-bookmarklet-panel')) return;
+    if (hoverEl) hoverEl.classList.remove('ab-inspect-hover');
+    e.target.classList.add('ab-inspect-hover');
+    hoverEl = e.target;
+  };
+
+  const handleClick = (e) => {
+    if (!inspectMode || e.target.closest('#ab-test-bookmarklet-panel')) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    selectedEl = e.target;
+
+    // Générer le sélecteur CSS
+    let selector = '';
+    if (selectedEl.id) {
+      selector = `#${selectedEl.id}`;
+    } else if (selectedEl.className && typeof selectedEl.className === 'string') {
+      const classes = selectedEl.className.split(' ').filter(c => c && !c.startsWith('ab-') && !c.match(/^css-[a-z0-9]+$/i));
+      if (classes.length > 0) {
+        selector = `.${classes[0]}`;
+      } else {
+        selector = selectedEl.tagName.toLowerCase();
+      }
+    } else {
+      selector = selectedEl.tagName.toLowerCase();
+    }
+
+    // Stocker le sélecteur
+    selectedEl._cssSelector = selector;
+
+    document.getElementById('ab-selected').textContent = `Sélectionné: ${selector}`;
+    addMsg(`✅ Élément sélectionné: ${selector}`, 'success');
+
+    inspectMode = false;
+    document.getElementById('ab-inspect-btn').textContent = '🔍 Activer l\'inspection';
+    document.body.style.cursor = '';
+    if (hoverEl) hoverEl.classList.remove('ab-inspect-hover');
+  };
+
+  document.addEventListener('mouseover', handleHover);
+  document.addEventListener('click', handleClick, true);
+
+  // Analyse de la description en langage naturel et génération CSS
   const analyzeDescription = (desc) => {
     const lower = desc.toLowerCase();
+    const selector = selectedEl?._cssSelector || 'body';
 
-    // Dictionnaire des couleurs
     const colors = {
       'orange': '#FF6B35',
       'bleu': '#2563eb',
@@ -214,32 +368,127 @@
       'gris': '#6b7280'
     };
 
-    let jsCode = '';
     let cssCode = '';
 
-    // Déterminer le sélecteur
-    const sel = selectedEl
-      ? (selectedEl.id
-          ? `#${selectedEl.id}`
-          : selectedEl.className
-            ? `.${selectedEl.className.split(' ').filter(c => c && !c.startsWith('ab-'))[0] || selectedEl.className.split(' ')[0]}`
-            : `${selectedEl.tagName.toLowerCase()}`)
-      : 'body';
+    // === POSITIONNEMENT ===
+
+    // Sticky
+    if (lower.includes('sticky') || lower.includes('collant') || (lower.includes('reste') && lower.includes('haut'))) {
+      const topValue = lower.match(/(\d+)\s*px/) ? lower.match(/(\d+)\s*px/)[1] : '0';
+      cssCode = `${selector} {\n  position: sticky !important;\n  top: ${topValue}px !important;\n  z-index: 1000 !important;\n}`;
+      addMsg(`Action: Position sticky (top: ${topValue}px)`, 'system');
+    }
+    // Fixed
+    else if (lower.includes('fixed') || lower.includes('fixe')) {
+      let position = 'top: 0; left: 0;';
+      if (lower.includes('bas')) position = 'bottom: 0; left: 0;';
+      if (lower.includes('droite')) position = 'top: 0; right: 0;';
+      cssCode = `${selector} {\n  position: fixed !important;\n  ${position}\n  z-index: 9999 !important;\n}`;
+      addMsg('Action: Position fixed', 'system');
+    }
+
+    // === AJOUT DE CONTENU VISUEL ===
+
+    // Ajouter un badge
+    else if (lower.includes('badge') || lower.includes('etiquette')) {
+      const badgeText = lower.match(/"([^"]+)"|'([^']+)'/)
+        ? (lower.match(/"([^"]+)"|'([^']+)'/)[1] || lower.match(/"([^"]+)"|'([^']+)'/)[2])
+        : 'PROMO';
+      let badgeColor = '#ef4444';
+      for (const [name, hex] of Object.entries(colors)) {
+        if (lower.includes(name)) {
+          badgeColor = hex;
+          break;
+        }
+      }
+      cssCode = `${selector} {\n  position: relative !important;\n}\n\n${selector}::before {\n  content: "${badgeText}" !important;\n  position: absolute;\n  top: 10px;\n  right: 10px;\n  background: ${badgeColor};\n  color: white;\n  padding: 6px 12px;\n  border-radius: 20px;\n  font-weight: bold;\n  font-size: 12px;\n  z-index: 10;\n}`;
+      addMsg(`Action: Ajouter badge "${badgeText}"`, 'system');
+    }
+    // Ajouter un bouton VISUEL (pas cliquable)
+    else if (lower.includes('ajoute') && (lower.includes('bouton') || lower.includes('cta'))) {
+      const btnText = lower.match(/"([^"]+)"|'([^']+)'/)
+        ? (lower.match(/"([^"]+)"|'([^']+)'/)[1] || lower.match(/"([^"]+)"|'([^']+)'/)[2])
+        : 'Cliquez ici';
+      let btnColor = '#FF6B35';
+      for (const [name, hex] of Object.entries(colors)) {
+        if (lower.includes(name)) {
+          btnColor = hex;
+          break;
+        }
+      }
+      cssCode = `${selector}::after {\n  content: "${btnText}" !important;\n  display: block;\n  background: ${btnColor};\n  color: white;\n  padding: 12px 24px;\n  margin-top: 1rem;\n  border-radius: 8px;\n  font-weight: 600;\n  text-align: center;\n  cursor: pointer;\n}\n\n/* ⚠️ ATTENTION: Bouton visuel seulement (non cliquable)\n   Pour un vrai bouton, utilisez JavaScript */`;
+      addMsg(`⚠️ Bouton visuel créé (non cliquable). Pour un vrai bouton, passez en mode CSS et ajoutez du JavaScript`, 'system');
+    }
+
+    // === ANIMATIONS ===
+
+    // Faire clignoter
+    else if (lower.includes('clignote') || lower.includes('pulse') || lower.includes('pulsation')) {
+      cssCode = `@keyframes ab-pulse {\n  0%, 100% { transform: scale(1); }\n  50% { transform: scale(1.05); }\n}\n\n${selector} {\n  animation: ab-pulse 2s infinite !important;\n}`;
+      addMsg('Action: Animation pulsation', 'system');
+    }
+    // Faire apparaître en fondu
+    else if (lower.includes('fondu') || lower.includes('fade')) {
+      cssCode = `@keyframes ab-fade-in {\n  from { opacity: 0; }\n  to { opacity: 1; }\n}\n\n${selector} {\n  animation: ab-fade-in 1s ease !important;\n}`;
+      addMsg('Action: Apparition en fondu', 'system');
+    }
+    // Faire glisser
+    else if (lower.includes('glisse') || lower.includes('slide')) {
+      const direction = lower.includes('gauche') ? '-100px, 0' : lower.includes('droite') ? '100px, 0' : lower.includes('bas') ? '0, 100px' : '0, -100px';
+      cssCode = `@keyframes ab-slide {\n  from { transform: translate(${direction}); opacity: 0; }\n  to { transform: translate(0, 0); opacity: 1; }\n}\n\n${selector} {\n  animation: ab-slide 0.5s ease !important;\n}`;
+      addMsg('Action: Animation glissement', 'system');
+    }
+
+    // === TRANSFORMATIONS ===
+
+    // Agrandir/Réduire
+    else if (lower.includes('agrandit') || lower.includes('scale') || lower.includes('zoom')) {
+      const scale = lower.match(/(\d+)\s*%/) ? parseInt(lower.match(/(\d+)\s*%/)[1]) / 100 : '1.2';
+      cssCode = `${selector} {\n  transform: scale(${scale}) !important;\n  transition: transform 0.3s !important;\n}`;
+      addMsg(`Action: Agrandir ${scale}x`, 'system');
+    }
+    // Rotation
+    else if (lower.includes('tourne') || lower.includes('rotation') || lower.includes('rotate')) {
+      const degrees = lower.match(/(\d+)\s*(deg|degré)/) ? lower.match(/(\d+)\s*(deg|degré)/)[1] : '45';
+      cssCode = `${selector} {\n  transform: rotate(${degrees}deg) !important;\n}`;
+      addMsg(`Action: Rotation ${degrees}°`, 'system');
+    }
+
+    // === VISIBILITÉ ===
+
+    // Opacité
+    else if (lower.includes('opacite') || lower.includes('opacity') || lower.includes('transparent')) {
+      const opacity = lower.match(/(\d+)\s*%/)
+        ? parseInt(lower.match(/(\d+)\s*%/)[1]) / 100
+        : lower.match(/0\.\d+/)
+          ? lower.match(/0\.\d+/)[0]
+          : '0.5';
+      cssCode = `${selector} {\n  opacity: ${opacity} !important;\n}`;
+      addMsg(`Action: Opacité ${opacity}`, 'system');
+    }
+    // Flou
+    else if (lower.includes('flou') || lower.includes('blur')) {
+      const amount = lower.match(/(\d+)\s*px/) ? lower.match(/(\d+)\s*px/)[1] : '5';
+      cssCode = `${selector} {\n  filter: blur(${amount}px) !important;\n}`;
+      addMsg(`Action: Flou ${amount}px`, 'system');
+    }
+
+    // === BASIQUES (comme avant) ===
 
     // Masquer/Cacher
-    if (lower.includes('masque') || lower.includes('cache') || lower.includes('supprime')) {
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.display = 'none';\n}`;
+    else if (lower.includes('masque') || lower.includes('cache') || lower.includes('supprime')) {
+      cssCode = `${selector} {\n  display: none !important;\n}`;
       addMsg('Action: Masquer l\'élément', 'system');
     }
     // Afficher
     else if (lower.includes('affiche') || lower.includes('montre')) {
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.display = 'block';\n  el.style.visibility = 'visible';\n}`;
+      cssCode = `${selector} {\n  display: block !important;\n  visibility: visible !important;\n}`;
       addMsg('Action: Afficher l\'élément', 'system');
     }
     // Changer le texte
     else if (lower.includes('texte') && lower.match(/"([^"]+)"|'([^']+)'/)) {
       const newText = desc.match(/"([^"]+)"|'([^']+)'/)[1] || desc.match(/"([^"]+)"|'([^']+)'/)[2];
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.textContent = "${newText.replace(/"/g, '\\"')}";\n}`;
+      cssCode = `${selector} {\n  font-size: 0 !important;\n}\n\n${selector}::before {\n  content: "${newText}" !important;\n  font-size: 16px !important;\n  display: block;\n}`;
       addMsg(`Action: Changer le texte en "${newText}"`, 'system');
     }
     // Couleur
@@ -256,294 +505,158 @@
       }
 
       if (lower.includes('fond') || lower.includes('background')) {
-        jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.backgroundColor = '${color}';\n}`;
-        addMsg(`Action: Changer la couleur de fond en ${color}`, 'system');
+        cssCode = `${selector} {\n  background-color: ${color} !important;\n}`;
+        addMsg(`Action: Couleur de fond ${color}`, 'system');
       } else if (lower.includes('bordure') || lower.includes('border')) {
-        jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.border = '3px solid ${color}';\n}`;
-        addMsg(`Action: Ajouter une bordure ${color}`, 'system');
+        cssCode = `${selector} {\n  border: 3px solid ${color} !important;\n}`;
+        addMsg(`Action: Bordure ${color}`, 'system');
       } else {
-        jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.color = '${color}';\n}`;
-        addMsg(`Action: Changer la couleur du texte en ${color}`, 'system');
+        cssCode = `${selector} {\n  color: ${color} !important;\n}`;
+        addMsg(`Action: Couleur du texte ${color}`, 'system');
       }
     }
-    // Taille de police
+    // Taille
     else if (lower.includes('taille') && (lower.includes('police') || lower.includes('texte') || lower.includes('font'))) {
       const size = lower.match(/(\d+)\s*px/) ? lower.match(/(\d+)\s*px/)[1] : '24';
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.fontSize = '${size}px';\n}`;
-      addMsg(`Action: Changer la taille à ${size}px`, 'system');
+      cssCode = `${selector} {\n  font-size: ${size}px !important;\n}`;
+      addMsg(`Action: Taille ${size}px`, 'system');
     }
     // Largeur
     else if (lower.includes('largeur') || lower.includes('width')) {
       const width = lower.match(/(\d+)\s*(%|px)/) ? lower.match(/(\d+)\s*(%|px)/)[0] : '100%';
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.width = '${width}';\n}`;
-      addMsg(`Action: Changer la largeur à ${width}`, 'system');
+      cssCode = `${selector} {\n  width: ${width} !important;\n}`;
+      addMsg(`Action: Largeur ${width}`, 'system');
     }
-    // Hauteur
-    else if (lower.includes('hauteur') || lower.includes('height')) {
-      const height = lower.match(/(\d+)\s*px/) ? lower.match(/(\d+)\s*px/)[0] : 'auto';
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.height = '${height}';\n}`;
-      addMsg(`Action: Changer la hauteur à ${height}`, 'system');
-    }
-    // Ajouter un badge
-    else if (lower.includes('badge') || lower.includes('etiquette')) {
-      const badgeText = lower.match(/"([^"]+)"|'([^']+)'/)
-        ? lower.match(/"([^"]+)"|'([^']+)'/)[1] || lower.match(/"([^"]+)"|'([^']+)'/)[2]
-        : 'PROMO';
-      let badgeColor = '#ef4444';
-      for (const [name, hex] of Object.entries(colors)) {
-        if (lower.includes(name)) {
-          badgeColor = hex;
-          break;
-        }
-      }
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  const badge = document.createElement('span');\n  badge.textContent = '${badgeText}';\n  badge.style.cssText = 'position:absolute;top:10px;right:10px;background:${badgeColor};color:#fff;padding:4px 12px;border-radius:4px;font-weight:700;font-size:12px;z-index:10';\n  el.style.position = 'relative';\n  el.appendChild(badge);\n}`;
-      addMsg(`Action: Ajouter un badge "${badgeText}"`, 'system');
-    }
-    // Ajouter un bouton
-    else if (lower.includes('ajoute') && (lower.includes('bouton') || lower.includes('cta'))) {
-      const btnText = lower.match(/"([^"]+)"|'([^']+)'/)
-        ? lower.match(/"([^"]+)"|'([^']+)'/)[1] || lower.match(/"([^"]+)"|'([^']+)'/)[2]
-        : 'En savoir plus';
-      let btnColor = '#FF6B35';
-      for (const [name, hex] of Object.entries(colors)) {
-        if (lower.includes(name)) {
-          btnColor = hex;
-          break;
-        }
-      }
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  const btn = document.createElement('button');\n  btn.textContent = '${btnText}';\n  btn.style.cssText = 'background:${btnColor};color:#fff;border:none;padding:12px 24px;font-size:16px;font-weight:600;border-radius:8px;cursor:pointer;margin-top:1rem;transition:all 0.3s';\n  btn.onmouseover = () => btn.style.transform = 'translateY(-2px)';\n  btn.onmouseout = () => btn.style.transform = 'translateY(0)';\n  btn.onclick = () => console.log('CTA clicked - AB Test');\n  el.appendChild(btn);\n}`;
-      addMsg(`Action: Ajouter un bouton "${btnText}"`, 'system');
-    }
-    // Arrondir les coins
-    else if (lower.includes('arrondi') || lower.includes('border-radius')) {
-      const radius = lower.match(/(\d+)\s*px/) ? lower.match(/(\d+)\s*px/)[1] : '8';
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.borderRadius = '${radius}px';\n}`;
-      addMsg(`Action: Arrondir les coins (${radius}px)`, 'system');
-    }
-    // Ajouter une ombre
-    else if (lower.includes('ombre') || lower.includes('shadow')) {
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';\n}`;
-      addMsg('Action: Ajouter une ombre', 'system');
-    }
-    // Mettre en gras
+    // Gras
     else if (lower.includes('gras') || lower.includes('bold')) {
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.fontWeight = '700';\n}`;
+      cssCode = `${selector} {\n  font-weight: 700 !important;\n}`;
       addMsg('Action: Mettre en gras', 'system');
-    }
-    // Mettre en italique
-    else if (lower.includes('italique') || lower.includes('italic')) {
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.fontStyle = 'italic';\n}`;
-      addMsg('Action: Mettre en italique', 'system');
     }
     // Centrer
     else if (lower.includes('centrer') || lower.includes('center')) {
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.textAlign = 'center';\n}`;
+      cssCode = `${selector} {\n  text-align: center !important;\n}`;
       addMsg('Action: Centrer le texte', 'system');
     }
-    // Opacité
-    else if (lower.includes('opacite') || lower.includes('opacity')) {
-      const opacity = lower.match(/(\d+)\s*%/)
-        ? parseInt(lower.match(/(\d+)\s*%/)[1]) / 100
-        : lower.match(/0\.\d+/)
-          ? lower.match(/0\.\d+/)[0]
-          : '0.5';
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.opacity = '${opacity}';\n}`;
-      addMsg(`Action: Changer l'opacité à ${opacity}`, 'system');
+    // Arrondi
+    else if (lower.includes('arrondi') || lower.includes('border-radius')) {
+      const radius = lower.match(/(\d+)\s*px/) ? lower.match(/(\d+)\s*px/)[1] : '8';
+      cssCode = `${selector} {\n  border-radius: ${radius}px !important;\n}`;
+      addMsg(`Action: Arrondir ${radius}px`, 'system');
     }
-    // Action par défaut
+    // Ombre
+    else if (lower.includes('ombre') || lower.includes('shadow')) {
+      cssCode = `${selector} {\n  box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;\n}`;
+      addMsg('Action: Ajouter une ombre', 'system');
+    }
+    // Par défaut
     else {
-      jsCode = `const el = document.querySelector('${sel}');\nif (el) {\n  el.style.backgroundColor = '#FF6B35';\n  el.style.padding = '1rem';\n}`;
+      cssCode = `${selector} {\n  background-color: #FF6B35 !important;\n  padding: 1rem !important;\n}`;
       addMsg('Action: Modification par défaut (fond orange)', 'system');
     }
 
-    return { jsCode, cssCode, selector: sel };
+    return cssCode;
   };
 
-  // Event handlers
-  document.getElementById('ab-close-btn').onclick = () => {
-    panel.classList.toggle('closed');
-  };
-
-  document.getElementById('ab-inspect-btn').onclick = () => {
-    inspectMode = !inspectMode;
-    document.getElementById('ab-inspect-btn').textContent = inspectMode
-      ? '✓ Inspection active'
-      : '🔍 Activer l\'inspection';
-    document.body.style.cursor = inspectMode ? 'crosshair' : '';
-
-    if (!inspectMode && hoverEl) {
-      hoverEl.classList.remove('ab-inspect-hover');
-    }
-  };
-
-  const handleHover = (e) => {
-    if (!inspectMode || e.target.closest('#ab-test-bookmarklet-panel')) return;
-
-    if (hoverEl) hoverEl.classList.remove('ab-inspect-hover');
-    e.target.classList.add('ab-inspect-hover');
-    hoverEl = e.target;
-  };
-
-  const handleClick = (e) => {
-    if (!inspectMode || e.target.closest('#ab-test-bookmarklet-panel')) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    selectedEl = e.target;
-
-    // Générer plusieurs sélecteurs alternatifs
-    const selectors = [];
-
-    // 1. Par ID (le plus fiable)
-    if (selectedEl.id) {
-      selectors.push(`#${selectedEl.id}`);
-    }
-
-    // 2. Par attributs data-*
-    for (let attr of selectedEl.attributes) {
-      if (attr.name.startsWith('data-')) {
-        selectors.push(`${selectedEl.tagName.toLowerCase()}[${attr.name}="${attr.value}"]`);
-        break; // Prendre seulement le premier
-      }
-    }
-
-    // 3. Par classe (filtrer les classes générées)
-    if (selectedEl.className && typeof selectedEl.className === 'string') {
-      const classes = selectedEl.className.split(' ')
-        .filter(c => c && !c.startsWith('ab-') && !c.match(/^css-[a-z0-9]+$/i));
-      if (classes.length > 0) {
-        selectors.push(`.${classes[0]}`);
-      }
-    }
-
-    // 4. Par tag seul (moins précis)
-    selectors.push(selectedEl.tagName.toLowerCase());
-
-    // Utiliser le premier sélecteur disponible
-    const sel = selectors[0];
-
-    // Vérifier si accessible
-    const testEl = document.querySelector(sel);
-    const isAccessible = testEl === selectedEl;
-
-    // Afficher les infos
-    let displayText = `Sélectionné: ${sel}`;
-    if (!isAccessible) {
-      displayText += ' ⚠️ (peut être inaccessible)';
-      addMsg('⚠️ Cet élément pourrait être dans un Shadow DOM ou iframe', 'error');
-      addMsg(`💡 Essayez de sélectionner l'élément parent ou utilisez un autre élément`, 'system');
-    }
-
-    // Afficher les propriétés de l'élément
-    const props = [];
-    if (selectedEl.id) props.push(`ID: ${selectedEl.id}`);
-    if (selectedEl.className && typeof selectedEl.className === 'string') {
-      const classes = selectedEl.className.split(' ').filter(c => c && !c.startsWith('ab-')).slice(0, 3);
-      if (classes.length > 0) props.push(`Classes: ${classes.join(', ')}`);
-    }
-    props.push(`Tag: <${selectedEl.tagName.toLowerCase()}>`);
-
-    document.getElementById('ab-selected').textContent = displayText;
-    addMsg(`✅ Élément: ${props.join(' • ')}`, 'system');
-
-    // Afficher les sélecteurs alternatifs s'il y en a plusieurs
-    if (selectors.length > 1) {
-      addMsg(`💡 Sélecteurs disponibles: ${selectors.slice(0, 3).join(', ')}`, 'system');
-    }
-
-    inspectMode = false;
-    document.getElementById('ab-inspect-btn').textContent = '🔍 Activer l\'inspection';
-    document.body.style.cursor = '';
-    if (hoverEl) hoverEl.classList.remove('ab-inspect-hover');
-  };
-
-  document.addEventListener('mouseover', handleHover);
-  document.addEventListener('click', handleClick, true);
-
+  // Générer le code CSS depuis langage naturel
   document.getElementById('ab-generate-btn').onclick = () => {
     const input = document.getElementById('ab-variant-input').value.trim();
 
     if (!input) {
-      addMsg('Veuillez décrire une modification', 'error');
+      addMsg('❌ Veuillez décrire une modification', 'error');
       return;
     }
 
-    addMsg(`📝 ${input}`, 'user');
+    if (!selectedEl) {
+      addMsg('⚠️ Aucun élément sélectionné. Le code s\'appliquera à toute la page (body)', 'system');
+    }
 
-    const result = analyzeDescription(input);
-    const combined = `// AB Test - ${new Date().toLocaleString('fr-FR')}
-// Description: ${input}
-// Sélecteur: ${result.selector}
+    addMsg(`📝 "${input}"`, 'user');
 
-(function() {
-  'use strict';
+    const cssCode = analyzeDescription(input);
+    document.getElementById('ab-css-input').value = cssCode;
 
-  ${result.jsCode}
+    // Passer à l'onglet CSS
+    document.querySelector('[data-tab="css"]').click();
 
-  ${result.cssCode ? `// Injection CSS
-  const style = document.createElement('style');
-  style.textContent = \`${result.cssCode}\`;
-  document.head.appendChild(style);` : ''}
-})();`;
-
-    document.getElementById('ab-code-output').textContent = combined;
-    document.getElementById('ab-code-section').style.display = 'block';
-    window.abTestCode = combined;
-
-    addMsg('✅ Code JavaScript généré!', 'system');
+    addMsg('✅ Code CSS généré! Cliquez sur "Appliquer" pour le tester', 'success');
   };
 
-  document.getElementById('ab-copy-btn').onclick = () => {
-    navigator.clipboard.writeText(window.abTestCode || '')
-      .then(() => addMsg('📋 Code copié pour AB Tasty!', 'system'))
-      .catch(() => addMsg('❌ Erreur de copie', 'error'));
-  };
+  // Appliquer le CSS (depuis les deux onglets)
+  document.getElementById('ab-apply-btn').onclick = () => {
+    const cssCode = document.getElementById('ab-css-input').value.trim();
 
-  document.getElementById('ab-preview-btn').onclick = () => {
-    if (!window.abTestCode) {
-      addMsg('❌ Aucun code à prévisualiser', 'error');
+    if (!cssCode) {
+      addMsg('❌ Aucun code CSS à appliquer', 'error');
       return;
     }
 
     try {
-      // Extraire le sélecteur du code pour vérification
-      const selectorMatch = window.abTestCode.match(/querySelector\(['"]([^'"]+)['"]\)/);
-      const selector = selectorMatch ? selectorMatch[1] : null;
-
-      // Vérifier si l'élément existe avant d'exécuter
-      if (selector) {
-        const testEl = document.querySelector(selector);
-        if (!testEl) {
-          addMsg(`❌ Élément "${selector}" introuvable sur cette page`, 'error');
-          addMsg('💡 Astuce: Utilisez le mode inspection pour sélectionner un élément existant', 'system');
-          return;
-        }
-        addMsg(`✅ Élément trouvé: ${selector}`, 'system');
+      // Supprimer l'ancien
+      if (appliedCSS) {
+        appliedCSS.remove();
       }
 
-      // Exécuter le code
-      eval(window.abTestCode);
-      addMsg('👁️ Preview appliqué avec succès! Rechargez (F5) pour annuler.', 'system');
+      // Créer et injecter
+      appliedCSS = document.createElement('style');
+      appliedCSS.id = 'ab-test-injected-css';
+      appliedCSS.textContent = cssCode;
+      document.head.appendChild(appliedCSS);
 
-      // Faire clignoter l'élément pour montrer qu'il a été modifié
-      if (selector) {
-        const el = document.querySelector(selector);
-        if (el) {
-          const originalOutline = el.style.outline;
-          el.style.outline = '3px solid #10b981';
-          setTimeout(() => {
-            el.style.outline = originalOutline;
-          }, 1500);
-        }
-      }
+      // Afficher le code
+      document.getElementById('ab-code-output').textContent = cssCode;
+      document.getElementById('ab-code-section').style.display = 'block';
+
+      // Stocker pour copie
+      window.abTestCSS = cssCode;
+
+      addMsg('✅ CSS appliqué avec succès!', 'success');
+      addMsg('💡 Rechargez (F5) pour annuler', 'system');
+
+      // Effet visuel
+      document.body.style.outline = '3px solid #10b981';
+      setTimeout(() => {
+        document.body.style.outline = '';
+      }, 1000);
+
     } catch (e) {
-      addMsg(`❌ Erreur d'exécution: ${e.message}`, 'error');
-      console.error('AB Test Preview Error:', e);
-      addMsg('💡 Vérifiez la console (F12) pour plus de détails', 'system');
+      addMsg(`❌ Erreur: ${e.message}`, 'error');
     }
   };
 
+  // Effacer
+  document.getElementById('ab-clear-btn').onclick = () => {
+    if (appliedCSS) {
+      appliedCSS.remove();
+      appliedCSS = null;
+      addMsg('🗑️ Modifications effacées', 'success');
+      document.getElementById('ab-code-section').style.display = 'none';
+    } else {
+      addMsg('💡 Aucune modification à effacer', 'system');
+    }
+  };
+
+  // Copier
+  document.getElementById('ab-copy-btn').onclick = () => {
+    const code = window.abTestCSS || '';
+    if (!code) {
+      addMsg('❌ Aucun code à copier', 'error');
+      return;
+    }
+
+    const abTastyCode = `// AB Test CSS - ${new Date().toLocaleString('fr-FR')}
+(function() {
+  const style = document.createElement('style');
+  style.textContent = \`
+${code}
+\`;
+  document.head.appendChild(style);
+})();`;
+
+    navigator.clipboard.writeText(abTastyCode)
+      .then(() => addMsg('📋 Code copié pour AB Tasty!', 'success'))
+      .catch(() => addMsg('❌ Erreur de copie', 'error'));
+  };
+
   // Message de bienvenue
-  addMsg('🎉 Panel ouvert! Version améliorée avec génération intelligente.', 'system');
+  addMsg('🎨 Panel hybride ouvert! Sélectionnez un élément puis décrivez votre modification.', 'system');
 })();
