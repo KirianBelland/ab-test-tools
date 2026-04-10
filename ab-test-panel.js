@@ -391,14 +391,66 @@
     e.stopPropagation();
 
     selectedEl = e.target;
-    const sel = selectedEl.id
-      ? `#${selectedEl.id}`
-      : selectedEl.className
-        ? `.${selectedEl.className.split(' ').filter(c => c && !c.startsWith('ab-'))[0] || selectedEl.className.split(' ')[0]}`
-        : `${selectedEl.tagName.toLowerCase()}`;
 
-    document.getElementById('ab-selected').textContent = `Sélectionné: ${sel}`;
-    addMsg(`Élément sélectionné: ${sel}`, 'system');
+    // Générer plusieurs sélecteurs alternatifs
+    const selectors = [];
+
+    // 1. Par ID (le plus fiable)
+    if (selectedEl.id) {
+      selectors.push(`#${selectedEl.id}`);
+    }
+
+    // 2. Par attributs data-*
+    for (let attr of selectedEl.attributes) {
+      if (attr.name.startsWith('data-')) {
+        selectors.push(`${selectedEl.tagName.toLowerCase()}[${attr.name}="${attr.value}"]`);
+        break; // Prendre seulement le premier
+      }
+    }
+
+    // 3. Par classe (filtrer les classes générées)
+    if (selectedEl.className && typeof selectedEl.className === 'string') {
+      const classes = selectedEl.className.split(' ')
+        .filter(c => c && !c.startsWith('ab-') && !c.match(/^css-[a-z0-9]+$/i));
+      if (classes.length > 0) {
+        selectors.push(`.${classes[0]}`);
+      }
+    }
+
+    // 4. Par tag seul (moins précis)
+    selectors.push(selectedEl.tagName.toLowerCase());
+
+    // Utiliser le premier sélecteur disponible
+    const sel = selectors[0];
+
+    // Vérifier si accessible
+    const testEl = document.querySelector(sel);
+    const isAccessible = testEl === selectedEl;
+
+    // Afficher les infos
+    let displayText = `Sélectionné: ${sel}`;
+    if (!isAccessible) {
+      displayText += ' ⚠️ (peut être inaccessible)';
+      addMsg('⚠️ Cet élément pourrait être dans un Shadow DOM ou iframe', 'error');
+      addMsg(`💡 Essayez de sélectionner l'élément parent ou utilisez un autre élément`, 'system');
+    }
+
+    // Afficher les propriétés de l'élément
+    const props = [];
+    if (selectedEl.id) props.push(`ID: ${selectedEl.id}`);
+    if (selectedEl.className && typeof selectedEl.className === 'string') {
+      const classes = selectedEl.className.split(' ').filter(c => c && !c.startsWith('ab-')).slice(0, 3);
+      if (classes.length > 0) props.push(`Classes: ${classes.join(', ')}`);
+    }
+    props.push(`Tag: <${selectedEl.tagName.toLowerCase()}>`);
+
+    document.getElementById('ab-selected').textContent = displayText;
+    addMsg(`✅ Élément: ${props.join(' • ')}`, 'system');
+
+    // Afficher les sélecteurs alternatifs s'il y en a plusieurs
+    if (selectors.length > 1) {
+      addMsg(`💡 Sélecteurs disponibles: ${selectors.slice(0, 3).join(', ')}`, 'system');
+    }
 
     inspectMode = false;
     document.getElementById('ab-inspect-btn').textContent = '🔍 Activer l\'inspection';
@@ -449,11 +501,46 @@
   };
 
   document.getElementById('ab-preview-btn').onclick = () => {
+    if (!window.abTestCode) {
+      addMsg('❌ Aucun code à prévisualiser', 'error');
+      return;
+    }
+
     try {
-      eval(window.abTestCode || '');
-      addMsg('👁️ Preview appliqué! Rechargez pour annuler.', 'system');
+      // Extraire le sélecteur du code pour vérification
+      const selectorMatch = window.abTestCode.match(/querySelector\(['"]([^'"]+)['"]\)/);
+      const selector = selectorMatch ? selectorMatch[1] : null;
+
+      // Vérifier si l'élément existe avant d'exécuter
+      if (selector) {
+        const testEl = document.querySelector(selector);
+        if (!testEl) {
+          addMsg(`❌ Élément "${selector}" introuvable sur cette page`, 'error');
+          addMsg('💡 Astuce: Utilisez le mode inspection pour sélectionner un élément existant', 'system');
+          return;
+        }
+        addMsg(`✅ Élément trouvé: ${selector}`, 'system');
+      }
+
+      // Exécuter le code
+      eval(window.abTestCode);
+      addMsg('👁️ Preview appliqué avec succès! Rechargez (F5) pour annuler.', 'system');
+
+      // Faire clignoter l'élément pour montrer qu'il a été modifié
+      if (selector) {
+        const el = document.querySelector(selector);
+        if (el) {
+          const originalOutline = el.style.outline;
+          el.style.outline = '3px solid #10b981';
+          setTimeout(() => {
+            el.style.outline = originalOutline;
+          }, 1500);
+        }
+      }
     } catch (e) {
-      addMsg(`❌ Erreur: ${e.message}`, 'error');
+      addMsg(`❌ Erreur d'exécution: ${e.message}`, 'error');
+      console.error('AB Test Preview Error:', e);
+      addMsg('💡 Vérifiez la console (F12) pour plus de détails', 'system');
     }
   };
 
